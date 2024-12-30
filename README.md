@@ -13,6 +13,8 @@ You will need to ass an integration block to your ossec.conf.
     <rule_id>111001,111002</rule_id>
     <alert_format>json</alert_format>
   </integration>
+...
+...
 # Send Level 12 or Higher
   <integration>
     <name>custom-shuffle</name>
