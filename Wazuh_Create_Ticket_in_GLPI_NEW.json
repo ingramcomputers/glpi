@@ -1,0 +1,1063 @@
+{
+  "name": "Wazuh Create Ticket in GLPI NEW",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "http://100.93.210.82/apirest.php/initSession",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "user_token XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        120
+      ],
+      "id": "f9535efe-e1ed-4a8f-abe4-73aa833099e9",
+      "name": "GLPI Get Session Token"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.93.210.82/apirest.php/Ticket",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "input.name",
+              "value": "={{ $('Merge').item.json.title }}"
+            },
+            {
+              "name": "input.content",
+              "value": "={{ $('SET data').item.json.message }} {{ $('SET data').item.json.win_message }}"
+            },
+            {
+              "name": "input.status",
+              "value": "1"
+            },
+            {
+              "name": "input.urgency",
+              "value": "3"
+            },
+            {
+              "name": "input.impact",
+              "value": "2"
+            },
+            {
+              "name": "input.priority",
+              "value": "=3"
+            },
+            {
+              "name": "input.category",
+              "value": "1"
+            },
+            {
+              "name": "input._type",
+              "value": "1"
+            },
+            {
+              "name": "input.itilcategories_id",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1420,
+        120
+      ],
+      "id": "2fe3ae4e-c1d1-4ade-ab32-502f59549e29",
+      "name": "Add a ticket"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "05938e9a-f666-4cee-a1b1-3fef468f73e0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -440,
+        160
+      ],
+      "id": "226e0ca1-b32b-47a0-9f15-e5bbc7ba4351",
+      "name": "Webhook",
+      "webhookId": "05938e9a-55555-55555-a155b1-3fef468f73e0"
+    },
+    {
+      "parameters": {
+        "url": "http://100.93.210.82/apirest.php/search/Computer",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "criteria[0][field]",
+              "value": "1"
+            },
+            {
+              "name": "criteria[0][searchtype]",
+              "value": "contains"
+            },
+            {
+              "name": "criteria[0][value]",
+              "value": "={{ $('Webhook').item.json.body.all_fields.agent.name }}"
+            },
+            {
+              "name": "forcedisplay[0]",
+              "value": "2"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2040,
+        220
+      ],
+      "id": "819c57e8-805c-4978-b854-d21372d583b0",
+      "name": "Search for Computer"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://100.93.210.82/apirest.php/Ticket/{{ $json.id }}/Item_Ticket/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": {\n      \"items_id\": \"{{ $('Merge').item.json.glpi_id }}\",\n      \"itemtype\": \"Computer\",\n      \"tickets_id\": \"{{ $json.id }}\"\n  }\n}\n",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        220
+      ],
+      "id": "b8a47c8d-1bdd-4d98-86b8-7503383b991d",
+      "name": "Link Computer"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://100.93.210.82/apirest.php/Ticket/{{ $('Add a ticket').item.json.id }}/TicketFollowup/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "input.tickets_id",
+              "value": "={{ $('Add a ticket').item.json.id }}"
+            },
+            {
+              "name": "input.content",
+              "value": "=<div>Raw Data:</div>\n<div>{{ JSON.stringify($('Webhook').item) }}</div>"
+            },
+            {
+              "name": "input.is_private",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        120
+      ],
+      "id": "167b43ac-c41e-4129-9132-2ebc996de0dc",
+      "name": "Raw Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "12d581b5-d700-47be-8302-16a2eda3e969",
+              "leftValue": "={{ $json.body.all_fields.data.integration }}",
+              "rightValue": "office365",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -220,
+        160
+      ],
+      "id": "312e2ca2-177d-46bb-8f8c-cf7cd16a8fde",
+      "name": "If Integration Exist"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c93d5926-c27d-4804-bf8d-e05c09f4a2f0",
+              "name": "pretext",
+              "value": "={{ $('Webhook').item.json.body.pretext }}",
+              "type": "string"
+            },
+            {
+              "id": "47f32259-6b6f-412c-a007-82a37aba4aee",
+              "name": "title",
+              "value": "={{ $('Webhook').item.json.body.title }}",
+              "type": "string"
+            },
+            {
+              "id": "c250108e-5906-4c20-a7dd-a0cfea424c06",
+              "name": "rule_id",
+              "value": "={{ $('Webhook').item.json.body.rule_id }}",
+              "type": "string"
+            },
+            {
+              "id": "98bb3984-6585-4326-b447-5b27b6eeed80",
+              "name": "timestamp",
+              "value": "={{ $('Webhook').item.json.body.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "2ad4e6fa-b197-4546-a7d6-3f8090ecf81c",
+              "name": "id",
+              "value": "={{ $('Webhook').item.json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a69a4072-8336-47e1-bed1-482b22879f12",
+              "name": "rule_level",
+              "value": "={{ $('Webhook').item.json.body.all_fields.rule.level }}",
+              "type": "number"
+            },
+            {
+              "id": "c8705c2f-2d32-40c0-af0c-3430f9c4c4e6",
+              "name": "agent_id",
+              "value": "={{ $('Webhook').item.json.body.all_fields.agent.id }}",
+              "type": "string"
+            },
+            {
+              "id": "19c3d517-f991-454b-94eb-6dd778fd8cff",
+              "name": "agent_name",
+              "value": "={{ $('Webhook').item.json.body.all_fields.agent.name }}",
+              "type": "string"
+            },
+            {
+              "id": "339fe8ac-7bed-4d0f-ae2e-29a207118787",
+              "name": "agent_ip",
+              "value": "={{ $('Webhook').item.json.body.all_fields.agent.ip }}",
+              "type": "string"
+            },
+            {
+              "id": "2b622d3a-23d7-4878-a582-bd7e695a7d5b",
+              "name": "win_message",
+              "value": "={{ $('Webhook').item.json.body.all_fields.data.win.system.message }}",
+              "type": "string"
+            },
+            {
+              "id": "07ac6bd6-93f2-4082-9769-a9033813a8ac",
+              "name": "severity",
+              "value": "={{ $('Webhook').item.json.body.severity }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        300
+      ],
+      "id": "a9d53ed2-b14c-4750-b767-f9c94bbd02d5",
+      "name": "Normal"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.all_fields.data.integration }}",
+                    "rightValue": "office365",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "m365"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0e589c6d-bf65-40c2-8d81-b1f43b8f8d8e",
+                    "leftValue": "={{ $json.body.all_fields.data.integration }}",
+                    "rightValue": "virustotal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "VirusTotal"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        0,
+        60
+      ],
+      "id": "8b043d52-5e16-4271-9889-25429f37e2f2",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c93d5926-c27d-4804-bf8d-e05c09f4a2f0",
+              "name": "pretext",
+              "value": "={{ $('Webhook').item.json.body.pretext }}",
+              "type": "string"
+            },
+            {
+              "id": "47f32259-6b6f-412c-a007-82a37aba4aee",
+              "name": "title",
+              "value": "={{ $('Webhook').item.json.body.title }}",
+              "type": "string"
+            },
+            {
+              "id": "c250108e-5906-4c20-a7dd-a0cfea424c06",
+              "name": "rule_id",
+              "value": "={{ $('Webhook').item.json.body.rule_id }}",
+              "type": "string"
+            },
+            {
+              "id": "98bb3984-6585-4326-b447-5b27b6eeed80",
+              "name": "timestamp",
+              "value": "={{ $('Webhook').item.json.body.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "2ad4e6fa-b197-4546-a7d6-3f8090ecf81c",
+              "name": "id",
+              "value": "={{ $('Webhook').item.json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a69a4072-8336-47e1-bed1-482b22879f12",
+              "name": "rule_level",
+              "value": "={{ $('Webhook').item.json.body.all_fields.rule.level }}",
+              "type": "number"
+            },
+            {
+              "id": "c8705c2f-2d32-40c0-af0c-3430f9c4c4e6",
+              "name": "agent_id",
+              "value": "={{ $('Webhook').item.json.body.all_fields.agent.id }}",
+              "type": "string"
+            },
+            {
+              "id": "19c3d517-f991-454b-94eb-6dd778fd8cff",
+              "name": "agent_name",
+              "value": "={{ $('Webhook').item.json.body.all_fields.agent.name }}",
+              "type": "string"
+            },
+            {
+              "id": "07ac6bd6-93f2-4082-9769-a9033813a8ac",
+              "name": "severity",
+              "value": "={{ $('Webhook').item.json.body.severity }}",
+              "type": "number"
+            },
+            {
+              "id": "eb4155b5-91c9-4f7e-b14d-44eced974a8e",
+              "name": "recipient",
+              "value": "={{ $json.body.all_fields.data.office365.Recipients[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "8bcad263-536c-4af2-b428-6052a9870ee1",
+              "name": "p1sender",
+              "value": "={{ $json.body.all_fields.data.office365.P1Sender }}",
+              "type": "string"
+            },
+            {
+              "id": "353bedb8-38d9-494d-8fb2-485dfe56df8d",
+              "name": "p2sender",
+              "value": "={{ $json.body.all_fields.data.office365.P2Sender }}",
+              "type": "string"
+            },
+            {
+              "id": "94e06384-c03c-47c6-935b-75b2236ecb22",
+              "name": "delivery_action",
+              "value": "={{ $json.body.all_fields.data.office365.DeliveryAction }}",
+              "type": "string"
+            },
+            {
+              "id": "d6b02034-5f14-4ed8-8e0e-bbebea1a0578",
+              "name": "detection_method",
+              "value": "={{ $json.body.all_fields.data.office365.DetectionMethod }}",
+              "type": "string"
+            },
+            {
+              "id": "6b73f9e7-545a-4bf6-aeca-291b41cb7802",
+              "name": "phish_confidence_level",
+              "value": "={{ $json.body.all_fields.data.office365.PhishConfidenceLevel }}",
+              "type": "string"
+            },
+            {
+              "id": "f9aabdf8-9688-4e14-abc2-1825466352a8",
+              "name": "sender_ip",
+              "value": "={{ $json.body.all_fields.data.office365.SenderIp }}",
+              "type": "string"
+            },
+            {
+              "id": "850fa9b2-5bde-4b6e-b4dd-7ca12aef23ed",
+              "name": "subject",
+              "value": "={{ $json.body.all_fields.data.office365.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "32f314ef-059b-4686-97bf-78bbdd91bda5",
+              "name": "verdict",
+              "value": "={{ $json.body.all_fields.data.office365.Verdict }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        -60
+      ],
+      "id": "88163ef8-9d22-4831-866c-e60d5972592d",
+      "name": "Set m365"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input JSON\nconst json = $('Merge').first().json;\n\n// Convert JSON to HTML table with vertical headers\nconst row = json;\nlet htmlTable = `<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">`;\n\nObject.entries(row).forEach(([key, value]) => {\n  htmlTable += `\n    <tr>\n      <th style=\"text-align: left; padding: 8px; background-color: #f2f2f2;\">${key}</th>\n      <td style=\"padding: 8px;\">${value}</td>\n    </tr>\n  `;\n});\n\nhtmlTable += `</table>`;\n\n// Return the HTML as output\nreturn [\n  {\n    json: {\n      html: htmlTable\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        120
+      ],
+      "id": "b16f127b-5dee-4d5f-84e8-c6af34fa6d66",
+      "name": "HTML Table",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e25e36b2-8bb4-4c89-a63d-21126e3e730a",
+              "name": "html",
+              "value": "={{ $json.html.replaceAll('\\n', '').replace(/\\\\n/g, '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        820,
+        120
+      ],
+      "id": "c42bcb4c-61ff-43c3-802e-8a86be7424ed",
+      "name": "Clean HTML"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        200,
+        120
+      ],
+      "id": "de5402fd-3003-4550-a8ad-74f997727e2a",
+      "name": "Need virustotal event"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        460,
+        120
+      ],
+      "id": "5a9dc027-e707-48e2-a286-a12c5f810aff",
+      "name": "Merge",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "492f2d77-3303-45e4-a2b2-97a7dfe9df84",
+              "leftValue": "={{ $('Webhook').item.json.body.all_fields.data.integration }}",
+              "rightValue": "office365",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1800,
+        120
+      ],
+      "id": "84f3fb67-f839-472a-b0c5-374e2709799e",
+      "name": "If m365"
+    },
+    {
+      "parameters": {
+        "url": "http://100.93.210.82/apirest.php/search/User",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "criteria[0][field]",
+              "value": "5"
+            },
+            {
+              "name": "criteria[0][searchtype]",
+              "value": "contains"
+            },
+            {
+              "name": "criteria[0][value]",
+              "value": "={{ $('Set m365').item.json.recipient }}"
+            },
+            {
+              "name": "forcedisplay[0]",
+              "value": "1"
+            },
+            {
+              "name": "forcedisplay[1]",
+              "value": "2"
+            },
+            {
+              "name": "forcedisplay[2]",
+              "value": "5"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2040,
+        0
+      ],
+      "id": "b45f935f-b84e-488c-834a-e51e206a34aa",
+      "name": "Search for User"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c93d5926-c27d-4804-bf8d-e05c09f4a2f0",
+              "name": "pretext",
+              "value": "={{ $('Webhook').item.json.body.pretext }}",
+              "type": "string"
+            },
+            {
+              "id": "47f32259-6b6f-412c-a007-82a37aba4aee",
+              "name": "title",
+              "value": "={{ $('Webhook').item.json.body.title }}",
+              "type": "string"
+            },
+            {
+              "id": "c250108e-5906-4c20-a7dd-a0cfea424c06",
+              "name": "rule_id",
+              "value": "={{ $('Webhook').item.json.body.rule_id }}",
+              "type": "string"
+            },
+            {
+              "id": "98bb3984-6585-4326-b447-5b27b6eeed80",
+              "name": "timestamp",
+              "value": "={{ $('Webhook').item.json.body.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "2ad4e6fa-b197-4546-a7d6-3f8090ecf81c",
+              "name": "id",
+              "value": "={{ $('Webhook').item.json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a69a4072-8336-47e1-bed1-482b22879f12",
+              "name": "rule_level",
+              "value": "={{ $('Webhook').item.json.body.all_fields.rule.level }}",
+              "type": "number"
+            },
+            {
+              "id": "07ac6bd6-93f2-4082-9769-a9033813a8ac",
+              "name": "severity",
+              "value": "={{ $('Webhook').item.json.body.severity }}",
+              "type": "number"
+            },
+            {
+              "id": "8903e988-34f3-4d67-a2da-537d225098b2",
+              "name": "message",
+              "value": "={{ $json.html }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1000,
+        120
+      ],
+      "id": "600599dc-e836-448b-b76c-fe282c0a4ba0",
+      "name": "SET data"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://100.93.210.82/apirest.php/Ticket/{{ $('Add a ticket').item.json.id }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"input\": {\n        \"_users_id_requester\": \"{{ $json.data[0][\"2\"] }}\",\n        \"use_notification\": false\n    }\n}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        0
+      ],
+      "id": "f18ba77a-3d9f-4af7-b316-ba960c5d80fd",
+      "name": "Update Ticket with User"
+    },
+    {
+      "parameters": {
+        "content": "Wazuh sends a webhook to n8n if level 12 or higher.\n\n  <integration>\n    <name>custom-shuffle</name>\n    <hook_url>https://n8n.yourdomain.com/webhook/05938e9a-5555-5555-5555-3fe5555f73e0</hook_url>\n    <level>12</level>\n    <alert_format>json</alert_format>\n  </integration>\n\nI have it split off for m365, since I want to assign it to a user instead of a device.\nStill a work in progress.\n\n",
+        "height": 340,
+        "width": 980
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        460,
+        -340
+      ],
+      "id": "5fe41e50-4150-4ab9-abf3-bfcf536e6a23",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "GLPI Get Session Token": {
+      "main": [
+        [
+          {
+            "node": "Add a ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If Integration Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search for Computer": {
+      "main": [
+        [
+          {
+            "node": "Link Computer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add a ticket": {
+      "main": [
+        [
+          {
+            "node": "Raw Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link Computer": {
+      "main": [
+        []
+      ]
+    },
+    "If Integration Exist": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normal": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Set m365",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Need virustotal event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set m365": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML Table": {
+      "main": [
+        [
+          {
+            "node": "Clean HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean HTML": {
+      "main": [
+        [
+          {
+            "node": "SET data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Need virustotal event": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "HTML Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Raw Data": {
+      "main": [
+        [
+          {
+            "node": "If m365",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If m365": {
+      "main": [
+        [
+          {
+            "node": "Search for User",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search for Computer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET data": {
+      "main": [
+        [
+          {
+            "node": "GLPI Get Session Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search for User": {
+      "main": [
+        [
+          {
+            "node": "Update Ticket with User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bf008444-4675-4fa9-ba42-c3534a3b093e",
+  "meta": {
+    "instanceId": "f4b423590f2d89223383f5495866054fc33ecddcc50317e3874f8c80eddb7686"
+  },
+  "id": "jZIlktPPej5SmDQN",
+  "tags": [
+    {
+      "createdAt": "2024-12-16T16:03:25.332Z",
+      "updatedAt": "2024-12-16T16:03:25.332Z",
+      "id": "DR9FC0GRHk73ZNIO",
+      "name": "glpi"
+    },
+    {
+      "createdAt": "2024-12-16T16:14:27.058Z",
+      "updatedAt": "2024-12-16T16:14:27.058Z",
+      "id": "FfgScp6rWe76sqKw",
+      "name": "wazuh"
+    },
+    {
+      "createdAt": "2024-12-16T16:14:27.055Z",
+      "updatedAt": "2024-12-16T16:14:27.055Z",
+      "id": "QLost9QGZb5iBwPu",
+      "name": "ticket"
+    }
+  ]
+}
