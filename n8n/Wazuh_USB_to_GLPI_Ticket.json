@@ -1,0 +1,555 @@
+{
+  "name": "Wazuh USB to GLPI Ticket",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "http://100.93.210.82/apirest.php/initSession",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "user_token XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        580,
+        -300
+      ],
+      "id": "28488708-2efd-4d96-9cda-8919410c12ae",
+      "name": "GLPI Get Session Token"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://100.93.210.82/apirest.php/Ticket",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "input.name",
+              "value": "={{ $('SET data').item.json.title }}"
+            },
+            {
+              "name": "input.content",
+              "value": "={{ $('SET data').item.json.html }}"
+            },
+            {
+              "name": "input.status",
+              "value": "1"
+            },
+            {
+              "name": "input.urgency",
+              "value": "3"
+            },
+            {
+              "name": "input.impact",
+              "value": "2"
+            },
+            {
+              "name": "input.priority",
+              "value": "=3"
+            },
+            {
+              "name": "input.category",
+              "value": "1"
+            },
+            {
+              "name": "input._type",
+              "value": "1"
+            },
+            {
+              "name": "input.itilcategories_id",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        -300
+      ],
+      "id": "88a29210-eb99-47bd-b91d-2fcb9df0c482",
+      "name": "Add a ticket"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "53d6144c-c75e-4599-ab47-c13a41754610",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        -300
+      ],
+      "id": "e693f360-b14f-4ffa-b41f-e16b470e308c",
+      "name": "Webhook",
+      "webhookId": "5355144c-c7555e-5555-5555-c15555554610"
+    },
+    {
+      "parameters": {
+        "url": "http://100.93.210.82/apirest.php/search/Computer",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "criteria[0][field]",
+              "value": "1"
+            },
+            {
+              "name": "criteria[0][searchtype]",
+              "value": "contains"
+            },
+            {
+              "name": "criteria[0][value]",
+              "value": "={{ $('SET data').item.json.computer }}"
+            },
+            {
+              "name": "forcedisplay[0]",
+              "value": "2"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        -300
+      ],
+      "id": "45a894d9-37b7-494e-8319-d1a4d9d692b3",
+      "name": "Search for Computer"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://100.93.210.82/apirest.php/Ticket/{{ $('Add a ticket').item.json.id }}/Item_Ticket/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": {\n      \"items_id\": \"{{ $json.data[0][\"2\"] }}\",\n      \"itemtype\": \"Computer\",\n      \"tickets_id\": \"{{ $('Add a ticket').item.json.id }}\"\n  }\n}\n",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        -300
+      ],
+      "id": "ac56ff80-6f29-4dd2-9ab7-2731d76a4c84",
+      "name": "Link Computer"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input JSON\nconst json = $('Edit Fields').first().json;\n\n// Convert JSON to HTML table with vertical headers\nconst row = json;\nlet htmlTable = `<table border=\"1\" style=\"border-collapse: collapse; width: 100%;\">`;\n\nObject.entries(row).forEach(([key, value]) => {\n  htmlTable += `\n    <tr>\n      <th style=\"text-align: left; padding: 8px; background-color: #f2f2f2;\">${key}</th>\n      <td style=\"padding: 8px;\">${value}</td>\n    </tr>\n  `;\n});\n\nhtmlTable += `</table>`;\n\n// Return the HTML as output\nreturn [\n  {\n    json: {\n      html: htmlTable\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        -300
+      ],
+      "id": "dcb82ca0-87c1-41a4-ad37-177b00ebf3ba",
+      "name": "HTML Table",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e25e36b2-8bb4-4c89-a63d-21126e3e730a",
+              "name": "html",
+              "value": "={{ $json.html.replaceAll('\\n', '').replace(/\\\\n/g, '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        -300
+      ],
+      "id": "7000c96f-fbc7-4e8a-a2f0-a235a61386bf",
+      "name": "Clean HTML"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9659d816-49c1-412a-9db8-839f5e882a42",
+              "name": "title",
+              "value": "=USB Drive inserted on {{ $('Edit Fields').item.json.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "45c89ac7-e96f-4bf7-9830-7ea6676b9357",
+              "name": "html",
+              "value": "={{ $json.html }}",
+              "type": "string"
+            },
+            {
+              "id": "e33a28e2-00df-4244-8970-62be5055ab8e",
+              "name": "computer",
+              "value": "={{ $('Edit Fields').item.json.computer }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        -300
+      ],
+      "id": "93294aa2-8183-42b1-8d68-2c2e4db182f0",
+      "name": "SET data"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://100.93.210.82/apirest.php/Ticket/{{ $('Add a ticket').item.json.id }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Session-Token",
+              "value": "={{ $('GLPI Get Session Token').item.json.session_token }}"
+            },
+            {
+              "name": "App-Token",
+              "value": "XXXXXXXXXXXXXXXXXXXXX"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"input\": {\n        \"_users_id_requester\": \"53\",\n        \"use_notification\": false\n    }\n}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        -300
+      ],
+      "id": "c738695c-0410-474f-8286-a16bd6ef8940",
+      "name": "Update Ticket with User"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d349a79c-9e58-46d0-8511-2d0d45dc6c57",
+              "name": "title",
+              "value": "={{ $json.body.title }}",
+              "type": "string"
+            },
+            {
+              "id": "ebd056ac-1719-4ab7-aa6b-667d63f7123c",
+              "name": "rule_id",
+              "value": "={{ $json.body.rule_id }}",
+              "type": "string"
+            },
+            {
+              "id": "39d9cc1a-bef2-45b8-baf3-1f513b354dc7",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "4aea8644-bc8f-497c-a7c6-2d86907adad0",
+              "name": "rule_level",
+              "value": "={{ $json.body.all_fields.rule.level }}",
+              "type": "number"
+            },
+            {
+              "id": "74be0e02-6ec2-4252-bf6d-1794435cc1a9",
+              "name": "description",
+              "value": "={{ $json.body.all_fields.rule.description }}",
+              "type": "string"
+            },
+            {
+              "id": "6d66a876-6a7c-416b-86a6-d4fd2df03223",
+              "name": "agent_id",
+              "value": "={{ $json.body.all_fields.agent.id }}",
+              "type": "string"
+            },
+            {
+              "id": "f80b7682-984d-42dc-b0d8-71c9de6dcf8c",
+              "name": "agent_name",
+              "value": "={{ $json.body.all_fields.agent.name }}",
+              "type": "string"
+            },
+            {
+              "id": "3921eb71-08fe-4fcd-81a8-f7213d9b1657",
+              "name": "agent_ip",
+              "value": "={{ $json.body.all_fields.agent.ip }}",
+              "type": "string"
+            },
+            {
+              "id": "5bf20672-4de9-4a9f-99fb-186475484b8d",
+              "name": "providerName",
+              "value": "={{ $json.body.all_fields.data.win.system.providerName }}",
+              "type": "string"
+            },
+            {
+              "id": "9d196a0d-ede1-460b-b0e3-7d4f8698127d",
+              "name": "eventID",
+              "value": "={{ $json.body.all_fields.data.win.system.eventID }}",
+              "type": "string"
+            },
+            {
+              "id": "344eff2e-c54d-44de-819d-5b158d7a7ec3",
+              "name": "computer",
+              "value": "={{ $json.body.all_fields.data.win.system.computer }}",
+              "type": "string"
+            },
+            {
+              "id": "53956542-4aa3-4be7-be07-f8a8f40ab0dd",
+              "name": "message",
+              "value": "={{ $json.body.all_fields.data.win.system.message }}",
+              "type": "string"
+            },
+            {
+              "id": "fd17373c-dffe-4e1c-b191-b103c3cb99f1",
+              "name": "device_Id",
+              "value": "={{ $json.body.all_fields.data.win.eventdata.deviceId }}",
+              "type": "string"
+            },
+            {
+              "id": "c80dec49-8902-491c-b973-ea8abbc31c35",
+              "name": "deviceDescription",
+              "value": "={{ $json.body.all_fields.data.win.eventdata.deviceDescription }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        -300
+      ],
+      "id": "8356f51c-86af-4253-af5d-9f313968828b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "This detects when a USB drive is inserted\n\n<integration>\n  <name>shuffle</name>\n  <hook_url>https://n8n.youdomain.com/webhook/53d6144c-c75e-4599-ab47-c13a41754610</hook_url>\n  <rule_id>111001,111002</rule_id>\n  <alert_format>json</alert_format>\n</integration>\n",
+        "height": 380,
+        "width": 920
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        280,
+        -800
+      ],
+      "id": "7b95a827-e9b6-4d99-a93f-25d7b302e5c3",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "GLPI Get Session Token": {
+      "main": [
+        [
+          {
+            "node": "Add a ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search for Computer": {
+      "main": [
+        [
+          {
+            "node": "Link Computer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add a ticket": {
+      "main": [
+        [
+          {
+            "node": "Update Ticket with User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link Computer": {
+      "main": [
+        []
+      ]
+    },
+    "HTML Table": {
+      "main": [
+        [
+          {
+            "node": "Clean HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean HTML": {
+      "main": [
+        [
+          {
+            "node": "SET data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET data": {
+      "main": [
+        [
+          {
+            "node": "GLPI Get Session Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTML Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Ticket with User": {
+      "main": [
+        [
+          {
+            "node": "Search for Computer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e1de5084-97ec-43e1-b2ac-551a5268d577",
+  "meta": {
+    "instanceId": "f4b423590f2d89223383f5495866054fc33ecddcc50317e3874f8c80eddb7686"
+  },
+  "id": "opPQVKyXqDNH511j",
+  "tags": [
+    {
+      "createdAt": "2024-12-16T16:03:25.332Z",
+      "updatedAt": "2024-12-16T16:03:25.332Z",
+      "id": "DR9FC0GRHk73ZNIO",
+      "name": "glpi"
+    },
+    {
+      "createdAt": "2024-12-16T16:14:27.058Z",
+      "updatedAt": "2024-12-16T16:14:27.058Z",
+      "id": "FfgScp6rWe76sqKw",
+      "name": "wazuh"
+    }
+  ]
+}
