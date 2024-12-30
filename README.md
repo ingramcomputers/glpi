@@ -5,6 +5,7 @@ I am using the Shuffle integration built into Wazuh (/var/ossec/integrations/shu
 
 You will need to ass an integration block to your ossec.conf.
 
+...
 # USB Detection
   <integration>
     <name>shuffle</name>
@@ -19,3 +20,4 @@ You will need to ass an integration block to your ossec.conf.
     <level>12</level>
     <alert_format>json</alert_format>
   </integration>
+...
